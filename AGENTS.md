@@ -7,3 +7,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+## Project notes for coding agents
+
+- `src/agent/` is server-only and framework-free: keep React out of it. The UI talks to it only through the typed stream parts in `src/agent/schema.ts`.
+- Numbers shown to reps come only from `src/agent/proof-points.ts`. Never let model output carry statistics; add a sourced proof point instead.
+- Every integration except the model is optional and must degrade to a skipped stage, never a crash (`capabilities()` in `config.ts`).
+- Record any stack or architecture change in `DECISIONS.md` with why, alternatives and trade-off.
+- Before finishing: `npx tsc --noEmit && npx eslint src && npm run build`.
