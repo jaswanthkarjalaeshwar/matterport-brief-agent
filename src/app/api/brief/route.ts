@@ -1,4 +1,6 @@
 import { createUIMessageStream, createUIMessageStreamResponse } from "ai";
+import { after } from "next/server";
+import { flushTraces } from "@/instrumentation";
 import { capabilities } from "@/agent/config";
 import { runBrief } from "@/agent/pipeline";
 import { BriefInput, type BriefUIMessage } from "@/agent/schema";
@@ -14,6 +16,9 @@ export async function POST(req: Request) {
   if (!parsed.success) return Response.json({ error: parsed.error.issues[0]?.message ?? "Invalid input" }, { status: 400 });
 
   if (!capabilities().live) return Response.json({ error: "Live mode is off: no model key configured." }, { status: 503 });
+
+  // Runs once the streamed response has finished, so the whole run's spans are flushed.
+  after(() => flushTraces());
 
   const stream = createUIMessageStream<BriefUIMessage>({
     execute: async ({ writer }) => {

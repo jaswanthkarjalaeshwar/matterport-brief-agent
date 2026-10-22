@@ -35,7 +35,8 @@ const DRAFT_PROMPT = `Write a pre-call brief for a Matterport account executive 
 - Otherwise, pain hypotheses: 2-3, each tied to a proofPointId from the notes. Say why you suspect it, from research.
 - Do not write any statistics or percentages; the UI shows the sourced metrics for each proof point.
 - Plain, specific language a rep would say out loud. No hype words. No flattery in the opening line.
-- Discovery questions should be open and specific to this account.`;
+- Discovery questions should be open and specific to this account.
+- Never write proof-point ids in prose. Refer to the customer by name ("a Texas brokerage", "BMO"); the UI links the proof.`;
 
 type Usage = { input: number; output: number; cost: number };
 const addUsage = (u: Usage, l: LanguageModelUsage, meta?: unknown) => {

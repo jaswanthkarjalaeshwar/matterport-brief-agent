@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import type { GuardrailCheck, StageStatus, TracePart } from "@/agent/schema";
 import { STAGES, type RunView } from "@/lib/run-view";
 
-const fmtMs = (ms?: number) => (ms == null ? "" : ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(1)}s`);
+const fmtMs = (ms?: number) => (ms == null ? "" : ms < 1000 ? `${Math.round(ms)}ms` : `${(ms / 1000).toFixed(1)}s`);
 
 function Dot({ status }: { status?: StageStatus }) {
   const base = "relative grid size-3.5 place-items-center rounded-full border";
