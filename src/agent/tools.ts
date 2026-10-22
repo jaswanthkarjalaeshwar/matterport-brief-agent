@@ -13,6 +13,8 @@ export type RunState = {
   monidSpentUsd: number;
   monidEndpoints: Map<string, number>;
   injectionFlags: number;
+  /** Raw text per host, for the domain identity check. */
+  pageText: Map<string, string>;
 };
 
 export const newRunState = (): RunState => ({
@@ -21,6 +23,7 @@ export const newRunState = (): RunState => ({
   monidSpentUsd: 0,
   monidEndpoints: new Map(),
   injectionFlags: 0,
+  pageText: new Map(),
 });
 
 const PRIVATE_HOST = /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.|\[?::1\]?|0\.0\.0\.0)/i;
@@ -128,7 +131,9 @@ function readPage(state: RunState) {
       });
       if (!res.ok) throw new Error(`Could not read ${target.host} (${res.status})`);
       state.sources.set(target.href, target.host);
-      const fenced = fenceUntrusted(await res.text(), target.href);
+      const raw = await res.text();
+      state.pageText.set(target.host.replace(/^www\./, ""), raw.slice(0, 20_000));
+      const fenced = fenceUntrusted(raw, target.href);
       if (fenced.flagged) state.injectionFlags++;
       return fenced.text;
     },

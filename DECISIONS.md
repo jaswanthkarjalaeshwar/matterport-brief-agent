@@ -64,3 +64,9 @@ Each entry: what was chosen, why, what else was considered, and the trade-off ac
 - **Chose:** graphite surfaces, hairline grids, mono telemetry, one mint accent for live signal and amber for "check this". The hero is a capture viewport whose scan progress is driven by the agent's actual stage progress.
 - **Why:** the interface should read as a tool a rep uses, and nod to digital twins without borrowing Matterport's brand.
 - **Trade-off:** a canvas animation on the landing page; it pauses offscreen and respects reduced motion.
+
+## 12. Fit gate, wrong-domain check and input screening
+- **Chose:** the brief schema now starts with a fit verdict (strong / possible / poor). Poor fit withholds pain hypotheses and turns the discovery questions into a qualification check. If a domain is given, the homepage must mention the named company or the brief is flagged. Company input is screened for markup, URLs with paths and instruction-like text before anything runs.
+- **Why:** an agent that pitches every account the same way trains reps to distrust it. Saying "not a fit" is the fastest way to earn trust in the briefs that are a fit. The domain check catches the most common real-world input error: the right name with the wrong site.
+- **Considered:** an LLM classifier for fit before research (an extra call on every run); blocking poor-fit accounts outright.
+- **Trade-off:** fit is still the model's judgment, so it's shown with its reason and the rep decides. Covered by `npm test`.

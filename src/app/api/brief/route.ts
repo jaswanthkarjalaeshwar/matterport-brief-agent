@@ -7,13 +7,13 @@ import { rateLimit } from "@/lib/rate-limit";
 export const maxDuration = 60;
 
 export async function POST(req: Request) {
-  if (!capabilities().live) return Response.json({ error: "Live mode is off: no model key configured." }, { status: 503 });
-
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
   if (!rateLimit(ip)) return Response.json({ error: "Too many briefs. Try again in a minute." }, { status: 429 });
 
   const parsed = BriefInput.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) return Response.json({ error: parsed.error.issues[0]?.message ?? "Invalid input" }, { status: 400 });
+
+  if (!capabilities().live) return Response.json({ error: "Live mode is off: no model key configured." }, { status: 503 });
 
   const stream = createUIMessageStream<BriefUIMessage>({
     execute: async ({ writer }) => {

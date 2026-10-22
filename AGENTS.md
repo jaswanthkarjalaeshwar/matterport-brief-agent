@@ -14,4 +14,4 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Numbers shown to reps come only from `src/agent/proof-points.ts`. Never let model output carry statistics; add a sourced proof point instead.
 - Every integration except the model is optional and must degrade to a skipped stage, never a crash (`capabilities()` in `config.ts`).
 - Record any stack or architecture change in `DECISIONS.md` with why, alternatives and trade-off.
-- Before finishing: `npx tsc --noEmit && npx eslint src && npm run build`.
+- Before finishing: `npx tsc --noEmit && npx eslint src && npm test && npm run build`.

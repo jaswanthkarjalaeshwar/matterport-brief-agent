@@ -14,8 +14,16 @@ export const VERTICALS = [
 ] as const;
 export type Vertical = (typeof VERTICALS)[number];
 
+/** Rejects things that are clearly not a company name: markup, URLs with paths, instructions. */
+const NOT_A_COMPANY = /[<>{}\[\]`]|https?:\/\/\S+\/\S|\b(ignore|disregard|system prompt|you are|instructions)\b/i;
+
 export const BriefInput = z.object({
-  company: z.string().trim().min(2).max(80),
+  company: z
+    .string()
+    .trim()
+    .min(2)
+    .max(80)
+    .refine((v) => !NOT_A_COMPANY.test(v), "That doesn't look like a company name."),
   domain: z
     .string()
     .trim()
@@ -32,7 +40,13 @@ export type BriefInput = z.infer<typeof BriefInput>;
  * Hypotheses point at a proof point by id; the UI renders the real, sourced
  * numbers from our knowledge base, so the model cannot invent a statistic.
  */
+export const FIT_LEVELS = ["strong", "possible", "poor"] as const;
+
 export const Brief = z.object({
+  fit: z.object({
+    level: z.enum(FIT_LEVELS).describe("strong: owns, sells, builds or insures physical space. possible: some physical footprint. poor: no meaningful physical-space use case"),
+    reason: z.string().describe("One sentence, citing research"),
+  }),
   snapshot: z.object({
     oneLiner: z.string().describe("What the company does, one sentence, plain words"),
     footprint: z.string().describe("Locations, portfolio size or scale signals found in research; say 'unknown' if not found"),
@@ -48,8 +62,8 @@ export const Brief = z.object({
         confidence: z.enum(["high", "medium", "low"]),
       }),
     )
-    .min(2)
-    .max(3),
+    .max(3)
+    .describe("2-3 when fit is strong or possible; empty when fit is poor"),
   discoveryQuestions: z.array(z.string()).min(3).max(5),
   likelyObjections: z
     .array(z.object({ objection: z.string(), response: z.string() }))

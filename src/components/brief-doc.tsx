@@ -132,6 +132,23 @@ function Hypothesis({ h, i }: { h: NonNullable<Brief["painHypotheses"][number]>;
   );
 }
 
+const FIT = {
+  strong: { label: "Strong fit", cls: "border-scan/40 bg-scan-dim text-scan" },
+  possible: { label: "Possible fit", cls: "border-line-strong bg-surface text-text" },
+  poor: { label: "Not a fit", cls: "border-check/50 bg-check-dim text-check" },
+} as const;
+
+function FitVerdict({ fit }: { fit: NonNullable<Brief["fit"]> }) {
+  if (!fit.level) return null;
+  const f = FIT[fit.level];
+  return (
+    <motion.div {...reveal} className={`mt-5 flex flex-col gap-1 rounded-md border px-3.5 py-3 sm:flex-row sm:items-baseline sm:gap-3 ${f.cls}`}>
+      <span className="shrink-0 font-mono text-[11px] tracking-wider uppercase">{f.label}</span>
+      {fit.reason && <span className="text-[13px] leading-relaxed text-text/90">{fit.reason}</span>}
+    </motion.div>
+  );
+}
+
 function CopyBtn({ copied, onCopy }: { copied: boolean; onCopy: () => void }) {
   return (
     <button onClick={onCopy} className="font-mono text-[11px] text-faint transition hover:text-scan">
@@ -197,6 +214,7 @@ export function BriefDoc({ brief, company, streaming, done }: { brief?: Partial<
         </div>
         <h2 className="mt-3 font-serif text-[44px] leading-[1] tracking-tight sm:text-[56px]">{company}</h2>
         <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-muted">{s.oneLiner}</p>
+        {brief.fit && <FitVerdict fit={brief.fit} />}
         <dl className="mt-5 grid gap-px overflow-hidden rounded-md border border-line bg-line sm:grid-cols-[auto_1fr]">
           {s.vertical && (
             <div className="bg-surface px-3.5 py-2.5">
@@ -224,6 +242,15 @@ export function BriefDoc({ brief, company, streaming, done }: { brief?: Partial<
             “<Typed key={brief.openingLine} text={brief.openingLine} />”
           </p>
         </motion.blockquote>
+      )}
+
+      {brief.fit?.level === "poor" && (
+        <Section n="01" title="Pain hypotheses">
+          <p className="rounded-lg border border-dashed border-check/40 px-4 py-4 text-[13px] leading-relaxed text-muted">
+            Withheld on purpose. The agent found no physical-space use case, so it won&apos;t invent pains to pitch against.
+            The questions below test whether a real need exists before anyone spends time on this account.
+          </p>
+        </Section>
       )}
 
       {!!brief.painHypotheses?.length && (

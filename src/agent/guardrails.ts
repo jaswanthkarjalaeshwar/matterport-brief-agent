@@ -35,8 +35,30 @@ export function fenceUntrusted(text: string, source: string, maxChars = 6000) {
 const HYPE = /\b(revolutionar\w*|game[- ]?chang\w*|synerg\w*|cutting[- ]edge|best[- ]in[- ]class|world[- ]class|unlock\w*|supercharg\w*)\b/gi;
 const NUMBER_CLAIM = /\b\d+(\.\d+)?\s?(%|x|percent|hours|days)\b/i;
 
+/**
+ * Does the page at the given domain actually belong to the company the rep typed?
+ * Cheap token check on the homepage text: catches typos and mismatched domains
+ * (e.g. "Compass" with "stripe.com") before a brief gets written about the wrong firm.
+ */
+export function domainMatchesCompany(company: string, pageText: string | undefined): boolean | undefined {
+  if (!pageText) return undefined;
+  const STOP = new Set(["inc", "llc", "ltd", "corp", "company", "group", "the", "and", "co"]);
+  const tokens = company.toLowerCase().split(/[^a-z0-9]+/).filter((t) => t.length > 2 && !STOP.has(t));
+  if (!tokens.length) return undefined;
+  const text = pageText.toLowerCase();
+  return tokens.some((t) => text.includes(t));
+}
+
 export function checkBrief(brief: Brief, allowedProofIds: Set<string>): { brief: Brief; checks: GuardrailCheck[] } {
   const checks: GuardrailCheck[] = [];
+
+  // Fit gate: a poor-fit account gets an honest "not a fit", never forced pain points.
+  if (brief.fit.level === "poor") {
+    checks.push({ id: "fit", label: "Account fit checked before pitching", status: "flag", note: "Poor fit. Hypotheses withheld so the rep doesn't force a pitch." });
+    brief = { ...brief, painHypotheses: [] };
+  } else {
+    checks.push({ id: "fit", label: "Account fit checked before pitching", status: "pass", note: `${brief.fit.level} fit` });
+  }
 
   // Grounding: every hypothesis must cite a real proof point the agent actually retrieved.
   const grounded = brief.painHypotheses.filter((h) => allowedProofIds.has(h.proofPointId) && getProofPoint(h.proofPointId));
@@ -45,7 +67,7 @@ export function checkBrief(brief: Brief, allowedProofIds: Set<string>): { brief:
     id: "grounding",
     label: "Every pain hypothesis cites a real customer result",
     status: dropped ? "fixed" : "pass",
-    note: dropped ? `Dropped ${dropped} hypothesis without a valid proof point` : undefined,
+    note: dropped ? `Dropped ${dropped} hypothesis without a valid proof point` : brief.fit.level === "poor" ? "No hypotheses to check" : undefined,
   });
 
   // Numbers: metrics come from the knowledge base only. The model's prose must not carry its own stats.

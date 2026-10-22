@@ -6,7 +6,7 @@ Built by Jaswanth Karjala Eshwar as a working sample for Matterport's AI Tools M
 
 ## What's in it
 
-- **Brief agent** (`/`): live research run or a replay of a sample account, with the agent's steps, tool calls, guardrail results and cost shown next to the brief.
+- **Brief agent** (`/`): live research run or a replay of one of seven sample accounts (including a deliberate poor fit), with the agent's steps, tool calls, guardrail results and cost shown next to the brief.
 - **AI GTM map** (`/strategy`): a point of view on AI across the revenue motion, from prospecting to renewal, with how each piece gets measured and where a human stays in charge.
 - **How it's built** (`/how`): architecture, stack choices and guardrails.
 

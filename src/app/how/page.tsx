@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { capabilities } from "@/agent/config";
 
 export const metadata: Metadata = { title: "How it's built · Pre-call Brief Agent" };
 
@@ -21,13 +22,24 @@ const STACK: { layer: string; pick: string; why: string; alt: string }[] = [
 ];
 
 const GUARDS = [
+  ["Input screening", "Company names are validated before anything runs: markup, URLs with paths and instruction-like text are rejected. Rate-limited per visitor."],
+  ["Fit gate", "The agent must judge fit first. A company with no physical-space use case gets an honest \"not a fit\" and no invented pains. Try the Stripe sample."],
+  ["Wrong-domain check", "If a domain is given, the homepage must mention the company the rep typed. \"Compass\" with stripe.com gets flagged before the rep trusts the brief."],
   ["Grounded by construction", "The model can only cite a proof-point id. The numbers on screen come from the source file, so it cannot invent a statistic."],
   ["Untrusted web content", "Pages and tool results are fenced as data and scrubbed of injection phrasing before the model sees them."],
   ["Tool limits in code", "Monid endpoints must be discovered in the same run and fit the run's budget. Private hosts are blocked."],
   ["Output checks", "Invented numbers, hype words and missing sources are flagged amber for the rep, not silently passed."],
 ];
 
+const WIRING = (c: ReturnType<typeof capabilities>) => [
+  { name: "Model · OpenRouter", on: c.live, file: "src/agent/model.ts", what: "Haiku primary, Gemini and GPT fallback" },
+  { name: "Search · Exa or Monid", on: c.search !== "none", file: "src/agent/tools.ts", what: "web_search, monid_discover, monid_run, read_page" },
+  { name: "Memory · Mem0", on: c.memory, file: "src/agent/memory.ts", what: "Recall before research, remember after the brief" },
+  { name: "Tracing · Langfuse", on: c.tracing, file: "src/instrumentation.ts", what: "Every model and tool call as an OpenTelemetry span" },
+];
+
 export default function HowPage() {
+  const wiring = WIRING(capabilities());
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-14 sm:px-6 md:py-20">
       <p className="label">Architecture</p>
@@ -48,6 +60,27 @@ export default function HowPage() {
           </li>
         ))}
       </ol>
+
+      <h2 className="mt-16 text-2xl font-medium tracking-tight">Live wiring on this deployment</h2>
+      <p className="mt-2 max-w-2xl text-[14px] text-muted">
+        Every integration is built in and switches on with its key. Anything off degrades to a skipped step, never an error, which is why the
+        public link always works.
+      </p>
+      <ul className="mt-6 grid gap-px overflow-hidden rounded-lg border border-line bg-line sm:grid-cols-2">
+        {wiring.map((w) => (
+          <li key={w.name} className="bg-surface p-4">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-[14px] font-medium">{w.name}</span>
+              <span className={`flex items-center gap-1.5 font-mono text-[10px] tracking-wider uppercase ${w.on ? "text-scan" : "text-faint"}`}>
+                <span className={`size-1.5 rounded-full ${w.on ? "bg-scan" : "bg-faint"}`} />
+                {w.on ? "on" : "off · no key"}
+              </span>
+            </div>
+            <p className="mt-1.5 text-[13px] text-muted">{w.what}</p>
+            <p className="mt-1 font-mono text-[11px] text-faint">{w.file}</p>
+          </li>
+        ))}
+      </ul>
 
       <h2 className="mt-16 text-2xl font-medium tracking-tight">Stack, and why</h2>
       <div className="mt-6 overflow-x-auto rounded-lg border border-line">

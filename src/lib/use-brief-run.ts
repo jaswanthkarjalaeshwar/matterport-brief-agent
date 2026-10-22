@@ -63,14 +63,15 @@ export function useBriefRun() {
         t += 120;
       }
       at(t, stage("research", "done", `${sample.tools.length} steps · ${sample.brief.sources.length} sources`, t - 300));
-      at(t + 100, stage("match", "done", "Proof points matched", 4));
+      const poor = sample.brief.fit.level === "poor";
+      at(t + 100, stage("match", poor ? "skipped" : "done", poor ? "Skipped: poor fit" : "Proof points matched", 4));
       at(t + 200, stage("draft", "running"));
       // Reveal the brief section by section, like the structured stream does.
       const b = sample.brief;
       const steps: Partial<typeof b>[] = [
-        { snapshot: b.snapshot },
-        { snapshot: b.snapshot, openingLine: b.openingLine },
-        ...b.painHypotheses.map((_, i) => ({ snapshot: b.snapshot, openingLine: b.openingLine, painHypotheses: b.painHypotheses.slice(0, i + 1) })),
+        { fit: b.fit, snapshot: b.snapshot },
+        { fit: b.fit, snapshot: b.snapshot, openingLine: b.openingLine },
+        ...b.painHypotheses.map((_, i) => ({ fit: b.fit, snapshot: b.snapshot, openingLine: b.openingLine, painHypotheses: b.painHypotheses.slice(0, i + 1) })),
         { ...b, sources: [] },
         b,
       ];
@@ -79,7 +80,7 @@ export function useBriefRun() {
       at(done, stage("draft", "done", undefined, steps.length * 260));
       at(done + 100, (v) => {
         v.checks = sample.checks;
-        v.stages.guardrails = { id: "guardrails", status: "done", ms: 3 };
+        v.stages.guardrails = { id: "guardrails", status: sample.checks.some((c) => c.status === "flag") ? "flagged" : "done", ms: 3 };
       });
       at(done + 150, () => setReplaying(false));
     },
