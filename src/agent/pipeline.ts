@@ -150,7 +150,11 @@ export async function runBrief(input: BriefInput, writer: UIMessageStreamWriter<
   stage("guardrails", "running");
   const { brief, checks } = checkBrief(output, state.proofIds);
   if (input.domain) {
-    const match = domainMatchesCompany(input.company, state.pageText.get(input.domain.replace(/^www\./, "")));
+    // Evidence: the homepage text, plus titles of search results hosted on that domain.
+    const domain = input.domain.replace(/^www\./, "");
+    const onDomain = [...state.sources].filter(([url]) => new URL(url).hostname.endsWith(domain)).map(([, title]) => title);
+    const evidence = [state.pageText.get(domain), ...onDomain].filter(Boolean).join("\n");
+    const match = domainMatchesCompany(input.company, evidence || undefined);
     checks.unshift(
       match === false
         ? { id: "identity", label: "Domain belongs to the named company", status: "flag", note: `${input.domain} doesn't mention “${input.company}”. Check you have the right account.` }

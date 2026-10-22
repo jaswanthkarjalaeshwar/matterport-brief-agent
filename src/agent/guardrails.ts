@@ -1,5 +1,5 @@
 import { getProofPoint } from "./proof-points";
-import type { Brief, GuardrailCheck } from "./schema";
+import { LIMITS, type Brief, type GuardrailCheck } from "./schema";
 
 /**
  * Three layers, cheapest first:
@@ -35,13 +35,17 @@ export function fenceUntrusted(text: string, source: string, maxChars = 6000) {
 const HYPE = /\b(revolutionar\w*|game[- ]?chang\w*|synerg\w*|cutting[- ]edge|best[- ]in[- ]class|world[- ]class|unlock\w*|supercharg\w*)\b/gi;
 const NUMBER_CLAIM = /\b\d+(\.\d+)?\s?(%|x|percent|hours|days)\b/i;
 
+/** Bot walls and error shells: not evidence about the company either way. */
+const BLOCK_PAGE = /confirm you are (a )?human|verify you are (a )?human|are you a robot|access denied|just a moment\.\.\.|enable javascript and cookies|captcha|attention required/i;
+export const isBlockPage = (text: string) => text.length < 200 || BLOCK_PAGE.test(text.slice(0, 2000));
+
 /**
  * Does the page at the given domain actually belong to the company the rep typed?
  * Cheap token check on the homepage text: catches typos and mismatched domains
  * (e.g. "Compass" with "stripe.com") before a brief gets written about the wrong firm.
  */
 export function domainMatchesCompany(company: string, pageText: string | undefined): boolean | undefined {
-  if (!pageText) return undefined;
+  if (!pageText || BLOCK_PAGE.test(pageText.slice(0, 2000))) return undefined;
   const STOP = new Set(["inc", "llc", "ltd", "corp", "company", "group", "the", "and", "co"]);
   const tokens = company.toLowerCase().split(/[^a-z0-9]+/).filter((t) => t.length > 2 && !STOP.has(t));
   if (!tokens.length) return undefined;
@@ -51,6 +55,15 @@ export function domainMatchesCompany(company: string, pageText: string | undefin
 
 export function checkBrief(brief: Brief, allowedProofIds: Set<string>): { brief: Brief; checks: GuardrailCheck[] } {
   const checks: GuardrailCheck[] = [];
+
+  // Shape: trim to limits rather than reject the run.
+  brief = {
+    ...brief,
+    painHypotheses: brief.painHypotheses.slice(0, LIMITS.painHypotheses),
+    discoveryQuestions: brief.discoveryQuestions.slice(0, LIMITS.discoveryQuestions),
+    likelyObjections: brief.likelyObjections.slice(0, LIMITS.likelyObjections),
+    sources: brief.sources.slice(0, LIMITS.sources),
+  };
 
   // Fit gate: a poor-fit account gets an honest "not a fit", never forced pain points.
   if (brief.fit.level === "poor") {

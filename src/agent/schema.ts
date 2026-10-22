@@ -39,7 +39,12 @@ export type BriefInput = z.infer<typeof BriefInput>;
  * The brief the model writes. Note what is NOT here: metrics.
  * Hypotheses point at a proof point by id; the UI renders the real, sourced
  * numbers from our knowledge base, so the model cannot invent a statistic.
+ *
+ * Counts are guidance in .describe(), not hard .max(): one extra question must
+ * not throw away a whole brief. guardrails.ts trims to LIMITS instead.
  */
+export const LIMITS = { painHypotheses: 3, discoveryQuestions: 5, likelyObjections: 3, sources: 8 } as const;
+
 export const FIT_LEVELS = ["strong", "possible", "poor"] as const;
 
 export const Brief = z.object({
@@ -62,15 +67,13 @@ export const Brief = z.object({
         confidence: z.enum(["high", "medium", "low"]),
       }),
     )
-    .max(3)
     .describe("2-3 when fit is strong or possible; empty when fit is poor"),
-  discoveryQuestions: z.array(z.string()).min(3).max(5),
+  discoveryQuestions: z.array(z.string()).describe("3-5 questions"),
   likelyObjections: z
     .array(z.object({ objection: z.string(), response: z.string() }))
-    .min(1)
-    .max(3),
+    .describe("1-3 objections"),
   openingLine: z.string().describe("A first sentence for the call, specific to this account, no flattery"),
-  sources: z.array(z.object({ title: z.string(), url: z.string() })).max(8),
+  sources: z.array(z.object({ title: z.string(), url: z.string() })).describe("Up to 8"),
 });
 export type Brief = z.infer<typeof Brief>;
 

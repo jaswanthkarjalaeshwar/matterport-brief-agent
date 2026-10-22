@@ -70,3 +70,9 @@ Each entry: what was chosen, why, what else was considered, and the trade-off ac
 - **Why:** an agent that pitches every account the same way trains reps to distrust it. Saying "not a fit" is the fastest way to earn trust in the briefs that are a fit. The domain check catches the most common real-world input error: the right name with the wrong site.
 - **Considered:** an LLM classifier for fit before research (an extra call on every run); blocking poor-fit accounts outright.
 - **Trade-off:** fit is still the model's judgment, so it's shown with its reason and the rep decides. Covered by `npm test`.
+
+## 13. Fixes from the first live runs
+- **Counts are guidance, not validation.** The model wrote six discovery questions where the schema said at most five, and the hard `.max()` threw away a good brief. Counts now live in `.describe()` and the guardrail step trims to `LIMITS`.
+- **Bot walls are "unread", not "mismatch".** Redfin's homepage serves a captcha to the page reader, so the domain check wrongly flagged it. Block pages are now detected and reported as blocked tool calls, and search results hosted on the domain count as evidence.
+- **Memory scoping.** Mem0 files assistant-written memories under the agent, not the user, so recall by user returned nothing. Recall now queries by agent and filters by rep and company in metadata.
+- **Lesson:** each bug was silent by design (memory and identity checks never block a brief), so tracing and an explicit live test caught them, not the UI.

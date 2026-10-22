@@ -15,4 +15,8 @@ ok(poor.brief.painHypotheses.length === 0 && poor.checks[0].status === "flag", "
 const fake = checkBrief({ ...base, fit: { level: "strong", reason: "x" }, painHypotheses: [{ title: "t", why: "Cuts costs 40%", proofPointId: "made-up", confidence: "high" }] }, new Set(["ati-trueplan"]));
 ok(fake.brief.painHypotheses.length === 0, "unknown proof point dropped");
 ok(fake.checks.find((c) => c.id === "grounding")?.status === "fixed", "grounding reports fix");
+const long = checkBrief({ ...base, fit: { level: "strong", reason: "x" }, discoveryQuestions: ["1","2","3","4","5","6"], painHypotheses: [] }, new Set());
+ok(long.brief.discoveryQuestions.length === 5, "extra questions trimmed, not rejected");
+ok(domainMatchesCompany("Redfin", "Let's confirm you are human. Complete the security check") === undefined, "bot wall is unverified, not a mismatch");
+ok(domainMatchesCompany("Redfin", "Redfin now powered by Rocket") === true, "search title on domain counts as evidence");
 if (failed) process.exit(1);

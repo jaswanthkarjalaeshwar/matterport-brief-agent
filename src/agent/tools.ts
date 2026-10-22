@@ -2,7 +2,7 @@ import "server-only";
 import { tool } from "ai";
 import { z } from "zod";
 import { config } from "./config";
-import { fenceUntrusted } from "./guardrails";
+import { fenceUntrusted, isBlockPage } from "./guardrails";
 import { findProofPoints } from "./proof-points";
 import { VERTICALS } from "./schema";
 
@@ -130,8 +130,9 @@ function readPage(state: RunState) {
         signal: AbortSignal.timeout(15_000),
       });
       if (!res.ok) throw new Error(`Could not read ${target.host} (${res.status})`);
-      state.sources.set(target.href, target.host);
       const raw = await res.text();
+      if (isBlockPage(raw)) return { blocked: `${target.host} shows a bot check. Use web search results for this company instead.` };
+      state.sources.set(target.href, target.host);
       state.pageText.set(target.host.replace(/^www\./, ""), raw.slice(0, 20_000));
       const fenced = fenceUntrusted(raw, target.href);
       if (fenced.flagged) state.injectionFlags++;
